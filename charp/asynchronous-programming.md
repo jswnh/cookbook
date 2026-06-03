@@ -1,19 +1,3 @@
-# Asynchronous Programming in C# 14
-
-## Introduction
-
-Asynchronous programming allows applications to perform long-running operations without blocking the executing thread. This is especially important for:
-
-- Database operations
-- HTTP requests
-- File I/O
-- Cloud service communication
-- Background processing
-
-The primary goal is to improve responsiveness and scalability by allowing threads to perform other work while waiting for external operations to complete.
-
----
-
 # 1. Synchronous vs Asynchronous Execution
 
 ## Synchronous Execution
