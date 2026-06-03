@@ -8,30 +8,8 @@ This repository serves as my personal knowledge base and quick reference for con
 
 - C#
 - TypeScript
-- JavaScript
 - Python
-- SQL
-- Go
-- Java
 - PHP
-- Rust
-
-## Purpose
-
-- Store programming notes
-- Document important concepts
-- Keep reusable code examples
-- Learn and review topics quickly
-
-## Structure
-
-```text
-csharp/
-typescript/
-python/
-sql/
-system-design/
-```
 
 ## Note
 
