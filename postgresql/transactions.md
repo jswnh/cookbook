@@ -1,9 +1,3 @@
-# PostgreSQL Transactions & Concurrency Reference
-
-PostgreSQL supports fully ACID-compliant transactions. It has a robust Multiversion Concurrency Control (MVCC) engine that minimizes reader-writer blocking.
-
----
-
 ## 1. Transaction Control & Savepoints
 
 ```sql
@@ -36,6 +30,7 @@ COMMIT; -- Or: END;
 ## 2. Transaction Isolation Levels
 
 To set the isolation level:
+
 ```sql
 -- For the current transaction block
 BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ;
@@ -46,14 +41,15 @@ SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL SERIALIZABLE;
 
 ### Isolation Levels Comparison in PostgreSQL
 
-| Isolation Level | Dirty Reads | Non-Repeatable Reads | Phantom Reads | Serialization Anomalies |
-| :--- | :--- | :--- | :--- | :--- |
-| **`READ UNCOMMITTED`** | **No** | Yes | Yes | Yes |
-| **`READ COMMITTED`** | No | Yes | Yes | Yes |
-| **`REPEATABLE READ`** | No | **No** | **No** | Yes (Write Skew is possible) |
-| **`SERIALIZABLE`** | No | No | No | **No** (Fully isolated) |
+| Isolation Level        | Dirty Reads | Non-Repeatable Reads | Phantom Reads | Serialization Anomalies      |
+| :--------------------- | :---------- | :------------------- | :------------ | :--------------------------- |
+| **`READ UNCOMMITTED`** | **No**      | Yes                  | Yes           | Yes                          |
+| **`READ COMMITTED`**   | No          | Yes                  | Yes           | Yes                          |
+| **`REPEATABLE READ`**  | No          | **No**               | **No**        | Yes (Write Skew is possible) |
+| **`SERIALIZABLE`**     | No          | No                   | No            | **No** (Fully isolated)      |
 
 > [!IMPORTANT]
+>
 > - **No Dirty Reads in PG**: In PostgreSQL, `READ UNCOMMITTED` behaves exactly like `READ COMMITTED` because the storage engine does not allow reading uncommitted data.
 > - **Serializable Snapshot Isolation (SSI)**: PostgreSQL's `SERIALIZABLE` level uses SSI to monitor locks and detect write-skew anomalies, automatically aborting conflicting transactions with a `40001` serialization failure (requiring the application to retry the transaction).
 
@@ -68,19 +64,22 @@ SELECT * FROM table FOR [ LOCK_STRENGTH ] [ NOWAIT | SKIP LOCKED ];
 ```
 
 ### Lock Strengths
+
 1. **`FOR UPDATE`**: Standard exclusive lock. Blocks others from updating, deleting, or acquiring any lock.
-2. **`FOR NO KEY UPDATE`**: Similar to `FOR UPDATE` but does not block shared key locks (`FOR KEY SHARE`). Used when updating columns that are *not* part of any foreign keys or unique constraints (highly optimizes locking overhead).
+2. **`FOR NO KEY UPDATE`**: Similar to `FOR UPDATE` but does not block shared key locks (`FOR KEY SHARE`). Used when updating columns that are _not_ part of any foreign keys or unique constraints (highly optimizes locking overhead).
 3. **`FOR SHARE`**: Shared lock. Allows others to read and acquire shared locks, but prevents updates/deletes.
 4. **`FOR KEY SHARE`**: Weakest lock. Allows others to execute `FOR NO KEY UPDATE` or read, but blocks deletes or updates of the primary/unique key columns.
 
 ### Non-Blocking Modifiers
+
 - **`NOWAIT`**: Fails immediately if the row is locked.
 - **`SKIP LOCKED`**: Skips locked rows.
+
 ```sql
 -- Fetch the next job, skip items locked by other concurrent processes
-SELECT * FROM active_jobs 
-WHERE status = 'queued' 
-LIMIT 1 
+SELECT * FROM active_jobs
+WHERE status = 'queued'
+LIMIT 1
 FOR UPDATE SKIP LOCKED;
 ```
 
@@ -100,14 +99,15 @@ CREATE TABLE customer_rewards (id INT, points INT);
 ALTER TABLE users ADD COLUMN rewards_id INT;
 
 -- Create constraint linking them
-ALTER TABLE users 
-    ADD CONSTRAINT fk_users_rewards 
+ALTER TABLE users
+    ADD CONSTRAINT fk_users_rewards
     FOREIGN KEY (rewards_id) REFERENCES customer_rewards(id);
 
 -- If everything works fine, commit.
 -- If any of the above fails, standard ROLLBACK will undo all schema changes!
 COMMIT;
 ```
+
 > [!WARNING]
 > Certain administrative operations cannot run inside a transaction, such as `VACUUM`, `CREATE DATABASE`, `REINDEX DATABASE`, and `CREATE INDEX CONCURRENTLY`.
 
@@ -132,5 +132,6 @@ SELECT pg_try_advisory_lock(992011);
 -- 3. Release session-level advisory lock (required if acquired successfully)
 SELECT pg_advisory_unlock(992011);
 ```
+
 - **`pg_advisory_xact_lock(key)`**: Automatically released on `COMMIT`/`ROLLBACK`.
 - **`pg_advisory_unlock(key)`**: Releases a session-level lock manually.

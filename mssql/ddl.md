@@ -1,18 +1,14 @@
-# MS SQL Server Data Definition Language (DDL) Syntax
-
-DDL statements create and modify database schemas, tables, views, and security boundaries. In SQL Server, DDL operations are fully transactional and can be rolled back within active transaction blocks.
-
----
-
 ## 1. Schema & Database Management
 
 ### Database Creation
+
 ```sql
 CREATE DATABASE SalesDB;
 GO -- GO is the client batch separator in SQL Server
 ```
 
 ### Schemas
+
 In SQL Server, schemas are logical namespaces that separate tables, views, and procedures. Objects are addressed using the `SchemaName.ObjectName` format.
 
 ```sql
@@ -39,9 +35,9 @@ CREATE TABLE sales.orders (
     customer_id INT NOT NULL,
     order_date DATE DEFAULT GETDATE(),
     status VARCHAR(20) DEFAULT 'Pending',
-    
+
     -- Table level constraints
-    CONSTRAINT fk_orders_customer FOREIGN KEY (customer_id) 
+    CONSTRAINT fk_orders_customer FOREIGN KEY (customer_id)
         REFERENCES sales.customers(id)
         ON DELETE CASCADE
         ON UPDATE NO ACTION
@@ -55,6 +51,7 @@ CREATE TABLE sales.orders (
 SQL Server supports three formats for temporary storage.
 
 ### 1. Local Temporary Tables (`#table`)
+
 Stored in the `tempdb` database. Visible only to the current connection/session; automatically dropped when the session closes.
 
 ```sql
@@ -68,6 +65,7 @@ INSERT INTO #TempReport VALUES (1, 500.50);
 ```
 
 ### 2. Global Temporary Tables (`##table`)
+
 Visible to all active database connections. Dropped automatically when the session that created it disconnects and all other sessions stop referencing it.
 
 ```sql
@@ -78,7 +76,9 @@ CREATE TABLE ##GlobalCache (
 ```
 
 ### 3. Table Variables (`@table`)
+
 Declared like standard variables. They live in memory (but can spill to tempdb) and are scoped to the current batch of execution.
+
 - **Transactional Behavior**: Table variables are not bound to active transactions. If the transaction rolls back, data inserted into a table variable remains!
 
 ```sql
@@ -97,26 +97,29 @@ SELECT * FROM @ProductList;
 ## 4. Constraints
 
 ### Primary and Foreign Key Additions
+
 ```sql
 -- Add Primary Key to existing table
-ALTER TABLE sales.orders 
+ALTER TABLE sales.orders
     ADD CONSTRAINT pk_orders PRIMARY KEY (order_id);
 
 -- Add Foreign Key with cascading deletion
-ALTER TABLE sales.orders 
-    ADD CONSTRAINT fk_orders_customer 
+ALTER TABLE sales.orders
+    ADD CONSTRAINT fk_orders_customer
     FOREIGN KEY (customer_id) REFERENCES sales.customers (id)
     ON DELETE CASCADE;
 ```
 
 ### Check Constraints
+
 ```sql
-ALTER TABLE sales.orders 
-    ADD CONSTRAINT chk_status_types 
+ALTER TABLE sales.orders
+    ADD CONSTRAINT chk_status_types
     CHECK (status IN ('Pending', 'Processing', 'Shipped', 'Cancelled'));
 ```
 
 ### Dropping Constraints
+
 ```sql
 -- In SQL Server, you drop constraints by their name directly
 ALTER TABLE sales.orders DROP CONSTRAINT fk_orders_customer;
@@ -148,11 +151,11 @@ ALTER TABLE sales.customers DROP COLUMN phone_number;
 TRUNCATE TABLE sales.orders;
 ```
 
-| Feature | TRUNCATE TABLE | DELETE FROM |
-| :--- | :--- | :--- |
-| **Category** | DDL | DML |
-| **Speed** | Extremely Fast (deallocates pages) | Slower (deletes row by row) |
-| **Transaction log** | Minimally logged | Fully logged |
-| **Identity Reset** | Resets `IDENTITY` | Does NOT reset `IDENTITY` |
-| **Trigger Activation** | Does not fire triggers | Fires `DELETE` triggers |
-| **Foreign Keys** | Cannot execute if referenced by FK | Allowed (will cascade if configured) |
+| Feature                | TRUNCATE TABLE                     | DELETE FROM                          |
+| :--------------------- | :--------------------------------- | :----------------------------------- |
+| **Category**           | DDL                                | DML                                  |
+| **Speed**              | Extremely Fast (deallocates pages) | Slower (deletes row by row)          |
+| **Transaction log**    | Minimally logged                   | Fully logged                         |
+| **Identity Reset**     | Resets `IDENTITY`                  | Does NOT reset `IDENTITY`            |
+| **Trigger Activation** | Does not fire triggers             | Fires `DELETE` triggers              |
+| **Foreign Keys**       | Cannot execute if referenced by FK | Allowed (will cascade if configured) |

@@ -1,9 +1,3 @@
-# MySQL Transactions & Concurrency Reference
-
-In MySQL, transactions are managed primarily by the storage engine (most commonly **InnoDB**). Transactions guarantee ACID compliance (Atomicity, Consistency, Isolation, Durability) for database operations.
-
----
-
 ## 1. Basic Transaction Syntax
 
 ```sql
@@ -11,7 +5,7 @@ In MySQL, transactions are managed primarily by the storage engine (most commonl
 SET autocommit = 0;
 
 -- Start a new transaction
-START TRANSACTION; 
+START TRANSACTION;
 -- Or: BEGIN;
 
 -- Perform operations
@@ -57,9 +51,10 @@ COMMIT;
 
 ## 3. Transaction Isolation Levels
 
-Isolation levels dictate how transaction operations are visible to other concurrent sessions. 
+Isolation levels dictate how transaction operations are visible to other concurrent sessions.
 
 ### Setting Isolation Levels
+
 ```sql
 -- Set isolation level for the next transaction in the session
 SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
@@ -70,12 +65,12 @@ SET GLOBAL TRANSACTION ISOLATION LEVEL SERIALIZABLE;
 
 ### Supported Isolation Levels
 
-| Isolation Level | Dirty Reads | Non-Repeatable Reads | Phantom Reads | Notes |
-| :--- | :--- | :--- | :--- | :--- |
-| **`READ UNCOMMITTED`** | Yes | Yes | Yes | Lowest isolation. Reads uncommitted changes (dirty reads). |
-| **`READ COMMITTED`** | No | Yes | Yes | Reads only committed data. Consistent reads read fresh snapshots. |
-| **`REPEATABLE READ`** | No | No | No (via MVCC / Next-key locks) | **MySQL default**. Consistent reads read the snapshot taken by the *first* read in the transaction. |
-| **`SERIALIZABLE`** | No | No | No | Highest isolation. Converts all plain `SELECT` statements to `SELECT ... FOR SHARE`. |
+| Isolation Level        | Dirty Reads | Non-Repeatable Reads | Phantom Reads                  | Notes                                                                                               |
+| :--------------------- | :---------- | :------------------- | :----------------------------- | :-------------------------------------------------------------------------------------------------- |
+| **`READ UNCOMMITTED`** | Yes         | Yes                  | Yes                            | Lowest isolation. Reads uncommitted changes (dirty reads).                                          |
+| **`READ COMMITTED`**   | No          | Yes                  | Yes                            | Reads only committed data. Consistent reads read fresh snapshots.                                   |
+| **`REPEATABLE READ`**  | No          | No                   | No (via MVCC / Next-key locks) | **MySQL default**. Consistent reads read the snapshot taken by the _first_ read in the transaction. |
+| **`SERIALIZABLE`**     | No          | No                   | No                             | Highest isolation. Converts all plain `SELECT` statements to `SELECT ... FOR SHARE`.                |
 
 ---
 
@@ -84,18 +79,23 @@ SET GLOBAL TRANSACTION ISOLATION LEVEL SERIALIZABLE;
 MySQL 8.0+ supports advanced explicit row-level locking flags. These are used inside transactional blocks to prevent concurrent modifications.
 
 ### Shared Lock (`FOR SHARE`)
+
 Allows other sessions to read the rows but blocks them from modifying or deleting.
+
 ```sql
 START TRANSACTION;
 SELECT * FROM products WHERE category = 'electronics' FOR SHARE;
 -- Other sessions can read, but updates are queued until this transaction commits.
 COMMIT;
 ```
+
 > [!NOTE]
 > `LOCK IN SHARE MODE` is the legacy MySQL 5.x syntax and is still supported for backwards compatibility but `FOR SHARE` is preferred.
 
 ### Exclusive Lock (`FOR UPDATE`)
+
 Blocks other sessions from reading with lock, updating, or deleting the matching rows.
+
 ```sql
 START TRANSACTION;
 SELECT * FROM inventory WHERE item_id = 101 FOR UPDATE;
@@ -105,20 +105,23 @@ COMMIT;
 ```
 
 ### Concurrency Modifiers (`NOWAIT` & `SKIP LOCKED`)
+
 Added in MySQL 8.0, these modifiers prevent transactions from blocking indefinitely on locked rows.
 
 - **`NOWAIT`**: Fails immediately with an error if target rows are already locked by another session.
+
 ```sql
 SELECT * FROM bookings WHERE seat_no = 'A12' FOR UPDATE NOWAIT;
 -- Error 3572: Statement aborted because lock waiting time exceeded.
 ```
 
 - **`SKIP LOCKED`**: Skips any locked rows and returns only unlocked rows. Extremely useful for implementing high-throughput queue systems.
+
 ```sql
 -- Fetch the first available job that isn't currently locked by another worker
-SELECT * FROM jobs 
-WHERE status = 'pending' 
-LIMIT 1 
+SELECT * FROM jobs
+WHERE status = 'pending'
+LIMIT 1
 FOR UPDATE SKIP LOCKED;
 ```
 
@@ -129,6 +132,7 @@ FOR UPDATE SKIP LOCKED;
 Some SQL statements cannot be rolled back and immediately commit any active transaction automatically. This is known as **implicit commit**.
 
 Common statements triggering implicit commits:
+
 - **DDL Statements**: `CREATE TABLE`, `ALTER TABLE`, `DROP TABLE`, `RENAME TABLE`, `TRUNCATE TABLE`, etc.
 - **Database operations**: `CREATE DATABASE`, `DROP DATABASE`, `ALTER DATABASE`.
 - **Administrative/User Operations**: `CREATE USER`, `DROP USER`, `GRANT`, `REVOKE`.
@@ -136,16 +140,17 @@ Common statements triggering implicit commits:
 - **Locking commands**: `LOCK TABLES`, `UNLOCK TABLES`.
 
 ### Implicit Commit Example
+
 ```sql
 START TRANSACTION;
 INSERT INTO logs (msg) VALUES ('Before table creation');
 
 -- This statement causes an IMPLICIT COMMIT!
-CREATE TABLE temp_markers (id INT); 
+CREATE TABLE temp_markers (id INT);
 
 -- The log insert above is now committed to the database.
 -- The ROLLBACK below will ONLY rollback statements executed AFTER the CREATE TABLE.
-ROLLBACK; 
+ROLLBACK;
 ```
 
 ---

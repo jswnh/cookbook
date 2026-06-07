@@ -1,9 +1,3 @@
-# MS SQL Server Transactions & Concurrency Reference
-
-Microsoft SQL Server guarantees ACID compliance. It supports traditional lock-based concurrency and modern row-versioning (MVCC) based isolation levels. DDL operations are fully transactional and can be rolled back.
-
----
-
 ## 1. Transaction Syntax & Savepoints
 
 ```sql
@@ -31,6 +25,7 @@ COMMIT TRANSACTION; -- Or: COMMIT TRAN;
 ## 2. Transaction Isolation Levels
 
 To set the isolation level for the current session:
+
 ```sql
 SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
 ```
@@ -41,13 +36,13 @@ SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
 - **`READ COMMITTED`**: **SQL Server Default.** Uses shared locks to prevent dirty reads. Locks are released immediately after the statement completes.
 - **`REPEATABLE READ`**: Holds locks on read rows until the transaction ends. Prevents non-repeatable reads.
 - **`SERIALIZABLE`**: Places range locks on indexes to prevent phantom reads.
-- **`SNAPSHOT`**: Uses row versioning in `tempdb`. Readers do not block writers, and writers do not block readers. Reads see the data snapshot taken at the start of the *transaction*.
-  - *Note*: Requires database configuration:
+- **`SNAPSHOT`**: Uses row versioning in `tempdb`. Readers do not block writers, and writers do not block readers. Reads see the data snapshot taken at the start of the _transaction_.
+  - _Note_: Requires database configuration:
     ```sql
     ALTER DATABASE SalesDB SET ALLOW_SNAPSHOT_ISOLATION ON;
     ```
-- **Read Committed Snapshot Isolation (RCSI)**: Changes the behavior of standard `READ COMMITTED` to use row versioning instead of locks. Reads see the data snapshot at the start of the *statement*.
-  - *Note*: Requires database configuration:
+- **Read Committed Snapshot Isolation (RCSI)**: Changes the behavior of standard `READ COMMITTED` to use row versioning instead of locks. Reads see the data snapshot at the start of the _statement_.
+  - _Note_: Requires database configuration:
     ```sql
     ALTER DATABASE SalesDB SET READ_COMMITTED_SNAPSHOT ON;
     ```
@@ -63,6 +58,7 @@ SELECT * FROM sales.inventory WITH (LOCK_HINT) WHERE item_id = 101;
 ```
 
 ### Common Locking Hints
+
 - **`NOLOCK`**: Performs a dirty read (equivalent to `READ UNCOMMITTED`). Prevents queries from blocking on active table locks.
 - **`ROWLOCK`**: Forces row-level locks instead of page-level or table-level locks.
 - **`UPDLOCK`**: Takes update locks instead of shared locks while reading. Prevents other transactions from updating the row until this transaction completes (prevents deadlocks).
@@ -72,8 +68,8 @@ SELECT * FROM sales.inventory WITH (LOCK_HINT) WHERE item_id = 101;
 ```sql
 -- Read inventory with an update lock to prevent concurrent modifications
 BEGIN TRAN;
-SELECT stock_count 
-FROM sales.inventory WITH (UPDLOCK, ROWLOCK) 
+SELECT stock_count
+FROM sales.inventory WITH (UPDLOCK, ROWLOCK)
 WHERE product_id = 45;
 
 -- Update stock
@@ -109,11 +105,11 @@ Inside stored procedures, wrap transactions in a `TRY...CATCH` block. Use **`XAC
 ```sql
 BEGIN TRY
     BEGIN TRANSACTION;
-    
+
     -- Modification statements
     UPDATE sales.accounts SET balance = balance - 100 WHERE id = 1;
     UPDATE sales.accounts SET balance = balance + 100 WHERE id = 2;
-    
+
     COMMIT TRANSACTION;
 END TRY
 BEGIN CATCH
@@ -122,17 +118,18 @@ BEGIN CATCH
     BEGIN
         COMMIT TRANSACTION;
     END;
-    
+
     -- Check if transaction is doomed (must rollback)
     IF XACT_STATE() = -1
     BEGIN
         ROLLBACK TRANSACTION;
     END;
-    
+
     -- Raise the error again
     THROW;
 END CATCH;
 ```
+
 - **`XACT_STATE() = 1`**: Active transaction, can be committed.
 - **`XACT_STATE() = -1`**: Active transaction, but an error has doomed it. It cannot be committed; only rollback is allowed.
 - **`XACT_STATE() = 0`**: No active transaction in the current session.

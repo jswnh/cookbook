@@ -1,9 +1,3 @@
-# MongoDB CRUD Operations Reference (v7.0 / v8.0)
-
-This reference outlines data manipulation statements using the MongoDB Query Language (MQL) for creation, retrieval, atomic updates, array edits, and deletion.
-
----
-
 ## 1. Create Operations
 
 ```javascript
@@ -30,6 +24,7 @@ db.collection.find(filter, projection);
 ```
 
 ### Basic Querying & Projection
+
 ```javascript
 -- Fetch active users, returning ONLY name and email (exclude _id)
 db.users.find(
@@ -54,19 +49,18 @@ db.users.find({
 ```
 
 ### Logical Query Operators
+
 - **`$and` / `$or`**: Joins query clauses with logical AND/OR.
 - **`$not`**: Inverts the effect of a query expression.
 
 ```javascript
 db.users.find({
-    $or: [
-        { status: "pending" },
-        { login_count: { $gt: NumberInt(100) } }
-    ]
+  $or: [{ status: "pending" }, { login_count: { $gt: NumberInt(100) } }],
 });
 ```
 
 ### Element and Array Operators
+
 - **`$exists`**: Matches documents that have the specified field.
 - **`$all`**: Matches arrays that contain all elements of the query.
 - **`$elemMatch`**: Selects documents if at least one array element matches all criteria.
@@ -92,6 +86,7 @@ db.collection.updateOne(filter, update, options);
 ```
 
 ### Atomic Update Operators
+
 - **`$set`**: Sets the value of a field.
 - **`$unset`**: Deletes the specified field.
 - **`$inc`**: Increments the field value by a specified number.
@@ -111,8 +106,9 @@ db.users.updateOne(
 ```
 
 ### Array Update Operators
+
 - **`$push`**: Appends a value to an array.
-- **`$addToSet`**: Adds a value to an array *only* if the value does not already exist (guarantees uniqueness).
+- **`$addToSet`**: Adds a value to an array _only_ if the value does not already exist (guarantees uniqueness).
 - **`$pull`**: Removes all array elements that match a specified query.
 
 ```javascript
@@ -127,8 +123,9 @@ db.users.updateOne(
 ```
 
 ### Positional Array Updates
-- **`$`**: Acts as a placeholder for the *first* element that matches the query document filter.
-- **`$[<identifier>]`**: Updates *all* elements in the array that match the `arrayFilters` conditions.
+
+- **`$`**: Acts as a placeholder for the _first_ element that matches the query document filter.
+- **`$[<identifier>]`**: Updates _all_ elements in the array that match the `arrayFilters` conditions.
 
 ```javascript
 -- 1. Update zip code of the matched work address (updates first match)

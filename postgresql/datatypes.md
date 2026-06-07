@@ -1,24 +1,20 @@
-# PostgreSQL Data Types Reference (v16 / v17)
-
-PostgreSQL supports a highly extensible type system. In addition to standard SQL data types, it includes native support for UUIDs, JSONB, arrays, ranges, network addresses, and custom geometric types.
-
----
-
 ## 1. Numeric Data Types
 
 PostgreSQL supports integers, arbitrary-precision decimals, and floating-point values.
 
-| Name | Storage | Description | Range |
-| :--- | :--- | :--- | :--- |
-| **`smallint`** | 2 bytes | Small-range integer | `-32,768` to `32,767` |
-| **`integer`** (or `int`) | 4 bytes | Standard integer | `-2,147,483,648` to `2,147,483,647` |
-| **`bigint`** | 8 bytes | Large-range integer | `-9,223,372,036,854,775,808` to `9,223,372,036,854,775,807` |
+| Name                          | Storage  | Description                      | Range                                                                |
+| :---------------------------- | :------- | :------------------------------- | :------------------------------------------------------------------- |
+| **`smallint`**                | 2 bytes  | Small-range integer              | `-32,768` to `32,767`                                                |
+| **`integer`** (or `int`)      | 4 bytes  | Standard integer                 | `-2,147,483,648` to `2,147,483,647`                                  |
+| **`bigint`**                  | 8 bytes  | Large-range integer              | `-9,223,372,036,854,775,808` to `9,223,372,036,854,775,807`          |
 | **`numeric`** / **`decimal`** | Variable | User-specified precision (exact) | Up to 131,072 digits before decimal point; up to 16,383 digits after |
-| **`real`** | 4 bytes | Single-precision float (inexact) | 6 decimal digits precision |
-| **`double precision`** | 8 bytes | Double-precision float (inexact) | 15 decimal digits precision |
+| **`real`**                    | 4 bytes  | Single-precision float (inexact) | 6 decimal digits precision                                           |
+| **`double precision`**        | 8 bytes  | Double-precision float (inexact) | 15 decimal digits precision                                          |
 
 ### Serial Auto-increment Types (Legacy)
+
 PG's legacy auto-increment mechanism. Creates an implicit sequence generator.
+
 - **`smallserial`** (2 bytes, 1 to 32,767)
 - **`serial`** (4 bytes, 1 to 2,147,483,647)
 - **`bigserial`** (8 bytes, 1 to 9,223,372,036,854,775,807)
@@ -72,7 +68,7 @@ CREATE TABLE events (
 );
 
 -- Query using interval logic
-SELECT event_time + duration AS end_time 
+SELECT event_time + duration AS end_time
 FROM events;
 ```
 
@@ -81,6 +77,7 @@ FROM events;
 ## 4. Specialized Data Types
 
 ### UUID Data Type
+
 Stores native 128-bit UUIDs conforming to RFC 4122. Takes significantly less space (16 bytes) and performs faster than a `varchar(36)` representation.
 
 ```sql
@@ -91,6 +88,7 @@ CREATE TABLE sessions (
 ```
 
 ### Boolean Data Type
+
 Explicit `boolean` state. Accepts `'true'`, `'t'`, `'y'`, `'yes'`, `'1'` for true and `'false'`, `'f'`, `'n'`, `'no'`, `'0'` for false.
 
 ```sql
@@ -100,6 +98,7 @@ CREATE TABLE users (
 ```
 
 ### Array Data Types
+
 PostgreSQL allows fields to be defined as multidimensional arrays of any base type.
 
 ```sql
@@ -114,6 +113,7 @@ INSERT INTO staff VALUES ('Jane', '{"555-0100", "555-0199"}', '{2000, 2100, 2200
 ```
 
 ### JSON & JSONB
+
 - **`json`**: Stores exact copy of input text. Requires re-parsing on query execution. Fast write, slow query.
 - **`jsonb`**: **Highly Recommended.** Stores JSON in decomposed binary format. Removes whitespace, duplicates, and orders keys. Supports index lookups (GIN) and parses much faster during queries.
 
@@ -125,6 +125,7 @@ CREATE TABLE client_logs (
 ```
 
 ### Network Address Types
+
 Optimized data structures representing IPv4/IPv6 addresses and MAC addresses. Validates input formatting and provides network operators (e.g. checking subnet containment).
 
 - **`inet`**: Host address and subnet representation.
@@ -143,7 +144,9 @@ CREATE TABLE server_logs (
 ## 5. Custom Range & Enumeration Types
 
 ### Custom ENUM Types
+
 Enums are created as schema-level types in PostgreSQL.
+
 ```sql
 -- 1. Declare schema level enum type
 CREATE TYPE order_status AS ENUM ('pending', 'processing', 'completed', 'cancelled');
@@ -156,7 +159,9 @@ CREATE TABLE orders (
 ```
 
 ### Range Types
+
 Represents intervals of values. Built-in ranges include `int4range`, `numrange`, `tsrange` (timestamp range), `tstzrange` (timestamptz range), etc.
+
 ```sql
 CREATE TABLE hotel_reservations (
     room_number INT,
@@ -165,7 +170,7 @@ CREATE TABLE hotel_reservations (
 
 -- Insert a reservation range
 INSERT INTO hotel_reservations VALUES (
-    101, 
+    101,
     tstzrange('2026-06-01 14:00:00+08', '2026-06-05 11:00:00+08')
 );
 ```

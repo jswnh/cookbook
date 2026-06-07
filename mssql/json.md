@@ -1,14 +1,7 @@
-# MS SQL Server JSON Data Type & Functions Reference
-
-SQL Server has robust built-in support for storing, formatting, and querying JSON documents. 
-
-Historically, JSON was stored as `NVARCHAR` strings. **SQL Server 2022** introduces a native **`JSON`** data type that stores JSON in an optimized binary format for faster query execution.
-
----
-
 ## 1. Creating and Inserting JSON
 
 ### Table Schema
+
 ```sql
 CREATE TABLE sales.products (
     id INT IDENTITY(1,1) PRIMARY KEY,
@@ -18,6 +11,7 @@ CREATE TABLE sales.products (
 ```
 
 ### Inserting JSON Data
+
 ```sql
 INSERT INTO sales.products (name, attributes) VALUES (
     'Smart Watch',
@@ -35,12 +29,12 @@ SQL Server provides two primary scalar functions for JSON extraction:
 - **`JSON_QUERY(expression, path)`**: Extracts an **object** or an **array** from a JSON document. Returns a JSON fragment string.
 
 ```sql
-SELECT 
+SELECT
     name,
     -- Extract scalar values (returns NVARCHAR)
     JSON_VALUE(attributes, '$.brand') AS brand,
     CAST(JSON_VALUE(attributes, '$.specs.battery_hours') AS INT) AS battery_hours,
-    
+
     -- Extract JSON fragments (objects or arrays)
     JSON_QUERY(attributes, '$.specs') AS specs_object,
     JSON_QUERY(attributes, '$.colors') AS colors_array
@@ -51,7 +45,7 @@ FROM sales.products;
 > **Path Modes (`lax` vs `strict`)**:
 > Paths default to `lax` mode. If a path is missing, `JSON_VALUE` returns `NULL`.
 > If you specify `strict` mode, SQL Server raises an error if the path is missing.
-> *Example*: `JSON_VALUE(attributes, 'strict $.specs.water_proof')`
+> _Example_: `JSON_VALUE(attributes, 'strict $.specs.water_proof')`
 
 ---
 
@@ -92,7 +86,7 @@ Use **`ISJSON(expression)`** to verify if a string contains valid JSON. SQL Serv
 SELECT ISJSON(attributes) FROM sales.products;
 
 -- 2. Structure validation (SQL Server 2022+)
-SELECT 
+SELECT
     ISJSON(attributes, VALUE) AS is_any_json,
     ISJSON(attributes, OBJECT) AS is_json_object,
     ISJSON(attributes, ARRAY) AS is_json_array,
@@ -106,7 +100,9 @@ SELECT
 `OPENJSON` is a table-valued function that parses JSON text and returns matching object keys/values as rows.
 
 ### Default Schema Output
+
 Without a mapping clause, `OPENJSON` returns three columns: `key` (index or name), `value`, and `type`.
+
 ```sql
 SELECT * FROM OPENJSON('{"brand": "TechCorp", "years": [2024, 2025]}');
 -- Returns:
@@ -116,7 +112,9 @@ SELECT * FROM OPENJSON('{"brand": "TechCorp", "years": [2024, 2025]}');
 ```
 
 ### With Explicit Schema Mapping (WITH Clause)
+
 Converts JSON structures directly into rows matching database table fields.
+
 ```sql
 SELECT p.name, jt.brand, jt.battery_hours
 FROM sales.products p
@@ -138,7 +136,7 @@ Appended to standard SQL queries to output data structured as JSON strings.
 - **`FOR JSON PATH`**: Formats output based on dot-notation aliases.
 
 ```sql
-SELECT 
+SELECT
     id AS [customer.id],
     name AS [customer.name],
     created_at AS [customer.registered]
@@ -155,11 +153,12 @@ SQL Server cannot index JSON columns directly. To index a JSON property, you mus
 
 ```sql
 -- 1. Create a persisted computed column
-ALTER TABLE sales.products 
+ALTER TABLE sales.products
     ADD product_brand AS CAST(JSON_VALUE(attributes, '$.brand') AS NVARCHAR(50)) PERSISTED;
 
 -- 2. Build index on the computed column
 CREATE NONCLUSTERED INDEX idx_products_brand ON sales.products (product_brand);
 ```
+
 > [!IMPORTANT]
 > The computed column must be defined as `PERSISTED` (physically stored on disk) for SQL Server to allow creating indexes on it.

@@ -1,12 +1,7 @@
-# MySQL JSON Data Type & Functions Reference
-
-MySQL provides a native `JSON` type that validates incoming data and stores it in an optimized binary format. 
-
----
-
 ## 1. Creating and Inserting JSON Data
 
 ### Table Definition
+
 ```sql
 CREATE TABLE products (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -16,7 +11,9 @@ CREATE TABLE products (
 ```
 
 ### Inserting JSON Documents
+
 Values can be passed as standard JSON strings. MySQL will reject the query if formatting is invalid.
+
 ```sql
 INSERT INTO products (name, attributes) VALUES (
     'Smart Watch',
@@ -49,7 +46,7 @@ SELECT name, attributes->'$.brand' AS brand FROM products;
 SELECT name, attributes->>'$.brand' AS brand FROM products;
 
 -- Query nested objects or array items
-SELECT 
+SELECT
     name,
     attributes->'$.specs.water_proof' AS is_waterproof,
     attributes->>'$.colors[0]' AS primary_color
@@ -57,6 +54,7 @@ FROM products;
 ```
 
 ### Extraction Functions
+
 - **`JSON_EXTRACT(json_doc, path)`**: Standard extract function.
 - **`JSON_KEYS(json_doc[, path])`**: Returns keys at a specific depth level.
 
@@ -71,14 +69,15 @@ SELECT JSON_KEYS(attributes) FROM products; -- Returns ["brand", "specs", "color
 
 JSON values should be modified using specific JSON functions rather than standard string updates.
 
-| Function | Behavior |
-| :--- | :--- |
-| **`JSON_SET(json_doc, path, val[, path, val])`** | Inserts new keys or replaces existing keys. |
-| **`JSON_INSERT(json_doc, path, val[, path, val])`** | Inserts new keys only; existing keys are left unchanged. |
-| **`JSON_REPLACE(json_doc, path, val[, path, val])`** | Replaces existing keys only; new keys are ignored. |
-| **`JSON_REMOVE(json_doc, path)`** | Deletes keys or array items at the specified path. |
+| Function                                             | Behavior                                                 |
+| :--------------------------------------------------- | :------------------------------------------------------- |
+| **`JSON_SET(json_doc, path, val[, path, val])`**     | Inserts new keys or replaces existing keys.              |
+| **`JSON_INSERT(json_doc, path, val[, path, val])`**  | Inserts new keys only; existing keys are left unchanged. |
+| **`JSON_REPLACE(json_doc, path, val[, path, val])`** | Replaces existing keys only; new keys are ignored.       |
+| **`JSON_REMOVE(json_doc, path)`**                    | Deletes keys or array items at the specified path.       |
 
 ### Modification Examples
+
 ```sql
 -- Update / Insert battery_hours and add model code
 UPDATE products
@@ -106,18 +105,18 @@ WHERE id = 1;
 
 ```sql
 -- Find products where specifications indicate waterproof is true
-SELECT name 
-FROM products 
+SELECT name
+FROM products
 WHERE JSON_CONTAINS(attributes, 'true', '$.specs.water_proof');
 
 -- Find products that have 'black' listed in colors array
-SELECT name 
-FROM products 
+SELECT name
+FROM products
 WHERE JSON_CONTAINS(attributes, '"black"', '$.colors');
 
 -- Verify if path exists
-SELECT name 
-FROM products 
+SELECT name
+FROM products
 WHERE JSON_CONTAINS_PATH(attributes, 'one', '$.specs.battery_hours');
 ```
 
@@ -139,6 +138,7 @@ JSON_TABLE(
 ```
 
 ### Advanced JSON_TABLE Example
+
 ```sql
 SELECT p.name, jt.brand, jt.battery_hours
 FROM products p,
@@ -158,12 +158,13 @@ JSON_TABLE(
 MySQL cannot index a full binary JSON column directly. You must create indexes using virtual columns or functional indexes.
 
 ### Method 1: Indexing a Generated Virtual Column
+
 Create a virtual column that extracts a value from the JSON document, and then create an index on that virtual column.
 
 ```sql
 -- 1. Alter table to add virtual column
-ALTER TABLE products 
-    ADD COLUMN product_brand VARCHAR(50) 
+ALTER TABLE products
+    ADD COLUMN product_brand VARCHAR(50)
     GENERATED ALWAYS AS (attributes->>'$.brand') VIRTUAL;
 
 -- 2. Index the virtual column
@@ -171,10 +172,13 @@ CREATE INDEX idx_products_brand ON products (product_brand);
 ```
 
 ### Method 2: Functional Index (MySQL 8.0.13+)
+
 Index the extraction expression directly without creating a virtual column.
+
 ```sql
-CREATE INDEX idx_products_spec_battery 
+CREATE INDEX idx_products_spec_battery
     ON products ((CAST(attributes->>'$.specs.battery_hours' AS UNSIGNED)));
 ```
+
 > [!IMPORTANT]
 > When using functional indexes with JSON, you must explicitly CAST the value to the correct target SQL type (like `UNSIGNED`, `CHAR`, etc.).

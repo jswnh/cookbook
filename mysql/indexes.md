@@ -1,15 +1,11 @@
-# MySQL Indexes & Query Optimization
-
-Indexes are data structures (typically B-Trees in InnoDB) that allow MySQL to locate rows rapidly without scanning the entire table.
-
----
-
 ## 1. Index Types
 
 ### Clustered Index (Primary Key)
+
 InnoDB tables store rows physically sorted by the primary key. If no primary key is defined, InnoDB chooses the first unique index without NULLs or generates a hidden row ID.
 
 ### Secondary Indexes
+
 Non-clustered indexes. They store the indexed column values and a pointer (the Primary Key value) back to the clustered index row.
 
 ### Index Creation Syntax
@@ -36,8 +32,10 @@ DROP INDEX idx_users_lastname ON users;
 ## 2. Advanced Indexing Strategies
 
 ### Composite Indexes (Leftmost Prefix Rule)
+
 An index on multiple columns, e.g., `(col_a, col_b, col_c)`.
 MySQL can use this index for queries filtering:
+
 - `col_a`
 - `col_a` AND `col_b`
 - `col_a` AND `col_b` AND `col_c`
@@ -50,14 +48,18 @@ CREATE INDEX idx_sales_date_dept ON sales (sales_date, department_id);
 ```
 
 ### Prefix Indexes (VARCHAR Optimization)
+
 For large text columns, index only the first $N$ characters to save space and speed up writes.
+
 ```sql
 -- Index only the first 10 characters of email
 CREATE INDEX idx_users_email_prefix ON users (email(10));
 ```
 
 ### Functional Indexes (MySQL 8.0.13+)
+
 Allows indexing values returned by functions or scalar expressions instead of direct column values.
+
 ```sql
 -- Index the year part of a date to optimize YEAR(signup_date) queries
 CREATE INDEX idx_signup_year ON users ((YEAR(signup_date)));
@@ -65,10 +67,12 @@ CREATE INDEX idx_signup_year ON users ((YEAR(signup_date)));
 -- Index lowercase values to speed up case-insensitive searches
 CREATE INDEX idx_lower_email ON users ((LOWER(email)));
 ```
+
 > [!IMPORTANT]
 > The expression inside a functional index must be enclosed in double parentheses.
 
 ### Invisible Indexes (MySQL 8.0+)
+
 Indexes can be toggled invisible. The optimizer ignores invisible indexes but they are still updated on DML operations. This helps test if dropping an index affects performance before committing to a drop.
 
 ```sql
@@ -116,19 +120,25 @@ EXPLAIN SELECT * FROM users WHERE email = 'john@example.com';
 If the query optimizer selects an inefficient plan, you can suggest or force specific indexes.
 
 ### USE INDEX
+
 Suggests MySQL to use a specific index.
+
 ```sql
 SELECT * FROM users USE INDEX (idx_users_lastname) WHERE last_name = 'Smith';
 ```
 
 ### FORCE INDEX
+
 Forces MySQL to use the index, overriding the optimizer's internal cost estimation (unless no matching index lookup is possible).
+
 ```sql
 SELECT * FROM users FORCE INDEX (idx_users_lastname) WHERE last_name = 'Smith';
 ```
 
 ### IGNORE INDEX
+
 Tells MySQL not to use specific indexes.
+
 ```sql
 SELECT * FROM users IGNORE INDEX (idx_users_lastname) WHERE last_name = 'Smith';
 ```

@@ -1,9 +1,3 @@
-# MongoDB Aggregation Pipeline Reference (v7.0 / v8.0)
-
-The aggregation pipeline is a framework for data transformation and analytics. Documents pass through a multi-stage pipeline that filters, groups, joins, and reshapes data.
-
----
-
 ## 1. Core Pipeline Stages
 
 | Stage | Purpose | SQL Analogue |

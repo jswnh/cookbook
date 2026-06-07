@@ -1,9 +1,3 @@
-# PostgreSQL Joins Syntax & Reference
-
-Joins combine datasets from multiple tables based on logical relationships. PostgreSQL conforms strictly to ANSI SQL join specifications, providing native full outer joins, self joins, and advanced analytical joins like `LATERAL`.
-
----
-
 ## 1. Standard Joins
 
 ### Inner Join

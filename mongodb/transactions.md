@@ -1,13 +1,7 @@
-# MongoDB Transactions & Concurrency Reference (v7.0 / v8.0)
-
-MongoDB supports single-document atomic updates out of the box. For operations spanning multiple documents or collections, MongoDB supports full ACID multi-document transactions inside Replica Sets and Sharded Clusters.
-
----
-
 ## 1. Single-Document vs. Multi-Document Transactions
 
 - **Single-Document Atomicity**: All writes to a single document are atomic. If you update nested fields or arrays within one document, the write is guaranteed to succeed or fail as a unit. Joins are not required, reducing the necessity for transactions in properly modeled schemas.
-- **Multi-Document Transactions**: Used when writes to *multiple* separate documents or collections must commit or roll back as a single block.
+- **Multi-Document Transactions**: Used when writes to _multiple_ separate documents or collections must commit or roll back as a single block.
 
 ---
 
@@ -21,40 +15,38 @@ const session = db.getMongo().startSession();
 
 // 2. Start a transaction block with optional configuration
 session.startTransaction({
-    readConcern: { level: "snapshot" },
-    writeConcern: { w: "majority" }
+  readConcern: { level: "snapshot" },
+  writeConcern: { w: "majority" },
 });
 
 try {
-    // 3. Execute operations, explicitly passing the session object
-    const accounts = session.getDatabase("bank").getCollection("accounts");
-    
-    // Debit Account 1
-    accounts.updateOne(
-        { account_id: 1, balance: { $gte: 100 } },
-        { $inc: { balance: -100 } },
-        { session }
-    );
-    
-    // Credit Account 2
-    accounts.updateOne(
-        { account_id: 2 },
-        { $inc: { balance: 100 } },
-        { session }
-    );
-    
-    // 4. Commit the transaction
-    session.commitTransaction();
-    print("Transaction committed successfully.");
-} 
-catch (error) {
-    // 5. Abort the transaction on error
-    print("Error encountered. Rolling back transaction: " + error);
-    session.abortTransaction();
-} 
-finally {
-    // 6. Close the session resources
-    session.endSession();
+  // 3. Execute operations, explicitly passing the session object
+  const accounts = session.getDatabase("bank").getCollection("accounts");
+
+  // Debit Account 1
+  accounts.updateOne(
+    { account_id: 1, balance: { $gte: 100 } },
+    { $inc: { balance: -100 } },
+    { session },
+  );
+
+  // Credit Account 2
+  accounts.updateOne(
+    { account_id: 2 },
+    { $inc: { balance: 100 } },
+    { session },
+  );
+
+  // 4. Commit the transaction
+  session.commitTransaction();
+  print("Transaction committed successfully.");
+} catch (error) {
+  // 5. Abort the transaction on error
+  print("Error encountered. Rolling back transaction: " + error);
+  session.abortTransaction();
+} finally {
+  // 6. Close the session resources
+  session.endSession();
 }
 ```
 
@@ -65,6 +57,7 @@ finally {
 MongoDB uses read concerns, write concerns, and read preferences to regulate consistency, durability, and high availability in replica sets.
 
 ### Write Concerns (`w` and `j`)
+
 Regulates the acknowledgment behavior of write operations.
 
 - **`w: 1`**: Default. Acknowledges write after it is committed to the local primary node.
@@ -81,6 +74,7 @@ db.products.insertOne(
 ```
 
 ### Read Concerns (`level`)
+
 Regulates what data is visible to queries.
 
 - **`"local"`** / **`"available"`**: Default. Returns the node's current local state. Data can be rolled back if the primary fails before replica synchronization.
@@ -89,6 +83,7 @@ Regulates what data is visible to queries.
 - **`"linearizable"`**: Returns only data acknowledged by a majority of nodes, while verifying that the primary node is still active via concurrent node checks. Prevents reading stale data.
 
 ### Read Preferences
+
 Controls which replica set nodes are queried for reads (scales read throughput).
 
 - **`primary`**: Default. All reads go to the primary node.

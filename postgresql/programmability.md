@@ -1,14 +1,9 @@
-# PostgreSQL PL/pgSQL Programmability Reference
-
-PostgreSQL supports database-level scripting primarily through `PL/pgSQL` (Procedural Language/PostgreSQL). 
-
----
-
 ## 1. Functions vs Procedures
 
 PostgreSQL distinguishes between functions (which compute values) and procedures (which execute commands and support transaction control).
 
 ### Functions (`CREATE FUNCTION`)
+
 Functions run inside the calling transaction block and cannot commit or roll back. They can be embedded inside standard `SELECT` expressions.
 
 ```sql
@@ -26,13 +21,14 @@ BEGIN
     ELSE
         v_tier := 'BRONZE';
     END IF;
-    
+
     RETURN v_tier;
 END;
 $$;
 ```
 
 #### Return Table Function Example
+
 ```sql
 CREATE OR REPLACE FUNCTION get_active_members(p_min_spent NUMERIC)
 RETURNS TABLE (user_id INT, username TEXT, spent NUMERIC)
@@ -40,14 +36,15 @@ LANGUAGE plpgsql
 AS $$
 BEGIN
     RETURN QUERY
-    SELECT id, name, total_spent 
-    FROM members 
+    SELECT id, name, total_spent
+    FROM members
     WHERE is_active = TRUE AND total_spent >= p_min_spent;
 END;
 $$;
 ```
 
 ### Procedures (`CREATE PROCEDURE`)
+
 Procedures support transaction controls (`COMMIT`/`ROLLBACK`) inside their body. They cannot be executed inside `SELECT` queries and must be invoked using `CALL`.
 
 ```sql
@@ -60,14 +57,16 @@ BEGIN
     FOR r IN SELECT id, amount FROM pending_payouts LOOP
         -- Process payout logic
         UPDATE accounts SET balance = balance - r.amount WHERE id = r.id;
-        
+
         -- Commit changes after processing each row individually!
-        COMMIT; 
+        COMMIT;
     END LOOP;
 END;
 $$;
 ```
+
 To run:
+
 ```sql
 CALL process_batch_payments();
 ```
@@ -79,6 +78,7 @@ CALL process_batch_payments();
 Control flow operations are written inside procedural blocks ($$\dots$$).
 
 ### Conditional (IF / CASE)
+
 ```sql
 -- IF-THEN-ELSIF
 IF condition THEN
@@ -101,6 +101,7 @@ END CASE;
 ### Loops
 
 #### FOR (Numeric Range)
+
 ```sql
 FOR i IN 1..10 LOOP
     -- statements (i is implicitly declared as integer)
@@ -108,7 +109,9 @@ END LOOP;
 ```
 
 #### FOR (Query Results)
+
 Loops through matching rows of a query.
+
 ```sql
 DECLARE
     r RECORD;
@@ -120,6 +123,7 @@ END;
 ```
 
 #### WHILE
+
 ```sql
 WHILE counter < 10 LOOP
     counter := counter + 1;
@@ -131,6 +135,7 @@ END LOOP;
 ## 3. Triggers & Trigger Functions
 
 PostgreSQL processes triggers in two steps:
+
 1. Define a **Trigger Function** returning type `TRIGGER`.
 2. Bind that trigger function to a target table.
 
@@ -149,7 +154,7 @@ BEGIN
         INSERT INTO audit_logs (table_name, record_id, action, old_data)
         VALUES ('users', OLD.id, 'DELETE', to_jsonb(OLD));
     END IF;
-    
+
     RETURN NEW; -- Returns proposed row for inserts/updates
 END;
 $$;
@@ -162,6 +167,7 @@ EXECUTE FUNCTION log_user_changes();
 ```
 
 ### Special Variables in Trigger Functions
+
 - **`NEW`**: Data row proposed for insertion or updated values (record type).
 - **`OLD`**: Original data row before update or delete operations (record type).
 - **`TG_OP`**: Trigger event name (`INSERT`, `UPDATE`, `DELETE`, `TRUNCATE`).
@@ -183,13 +189,13 @@ DECLARE
 BEGIN
     result := numerator / denominator;
     RETURN result;
-    
+
 EXCEPTION
     -- Catch division by zero errors
     WHEN division_by_zero THEN
         RAISE WARNING 'Attempted to divide by zero. Returning NULL.';
         RETURN NULL;
-        
+
     -- Catch all other exceptions
     WHEN OTHERS THEN
         RAISE EXCEPTION 'An unexpected error occurred: %', SQLERRM;
@@ -198,10 +204,12 @@ $$;
 ```
 
 ### Raising Custom Errors
+
 ```sql
-RAISE EXCEPTION 'Invalid age value: %', p_age 
+RAISE EXCEPTION 'Invalid age value: %', p_age
     USING ERRCODE = 'invalid_parameter_value';
 ```
+
 - **`SQLERRM`**: Global variable storing the text description of the current error.
 - **`SQLSTATE`**: Global variable storing the 5-character SQL standard error code.
 - **`RAISE LEVEL`**: Levels include `DEBUG`, `LOG`, `INFO`, `NOTICE`, `WARNING`, `EXCEPTION` (aborts transaction).

@@ -1,14 +1,9 @@
-# MS SQL Server Programmability Reference
-
-SQL Server utilizes Transact-SQL (T-SQL) to write stored procedures, user-defined functions, triggers, and views.
-
----
-
 ## 1. Stored Procedures
 
 Procedures can accept parameters, return multiple record sets, call transactions, and run administrative tasks.
 
 ### Creation and Call
+
 ```sql
 CREATE OR ALTER PROCEDURE sales.GetCustomerBalances
     @MinBalance DECIMAL(10,2),
@@ -17,13 +12,13 @@ CREATE OR ALTER PROCEDURE sales.GetCustomerBalances
 AS
 BEGIN
     SET NOCOUNT ON; -- Prevents returning "X rows affected" messages (optimizes network traffic)
-    
+
     -- Query records
-    SELECT id, name, balance 
-    FROM sales.accounts 
-    WHERE balance >= @MinBalance 
+    SELECT id, name, balance
+    FROM sales.accounts
+    WHERE balance >= @MinBalance
       AND (@ActiveOnly = 0 OR is_active = @ActiveOnly);
-      
+
     -- Set output parameter value
     SELECT @TotalCustomers = @@ROWCOUNT;
 END;
@@ -42,7 +37,9 @@ SELECT @Count AS Matches;
 Functions return values and can be embedded directly inside SELECT queries. In SQL Server, there are three types of UDFs:
 
 ### 1. Scalar Functions
+
 Returns a single value.
+
 ```sql
 CREATE OR ALTER FUNCTION dbo.fn_CalculateTax (@Amount DECIMAL(10,2))
 RETURNS DECIMAL(10,2)
@@ -54,22 +51,26 @@ GO
 ```
 
 ### 2. Inline Table-Valued Functions (iTVF)
+
 Returns a virtual table using a single `SELECT` block. Highly performant because the optimizer treats it like a View and compiles it inline with the outer query.
+
 ```sql
 CREATE OR ALTER FUNCTION sales.fn_GetProductsByPrice (@MaxPrice DECIMAL(10,2))
 RETURNS TABLE
 AS
 RETURN (
-    SELECT product_id, name, price 
-    FROM sales.products 
+    SELECT product_id, name, price
+    FROM sales.products
     WHERE price <= @MaxPrice
 );
 GO
 ```
 
 ### 3. Multi-Statement Table-Valued Functions (mSTVF)
+
 Builds the output table procedurally within a `BEGIN...END` block.
-- *Performance warning*: SQL Server treats mSTVFs as black boxes, making cardinality estimates difficult. Use Inline TVFs instead whenever possible.
+
+- _Performance warning_: SQL Server treats mSTVFs as black boxes, making cardinality estimates difficult. Use Inline TVFs instead whenever possible.
 
 ```sql
 CREATE OR ALTER FUNCTION sales.fn_GetCustomReport ()
@@ -88,10 +89,12 @@ GO
 ## 3. Triggers
 
 Triggers execute in response to table events. They reference two virtual tables:
+
 - **`inserted`**: Houses new/modified records.
 - **`deleted`**: Houses deleted or original pre-modified records.
 
 ### AFTER Trigger
+
 Executes after the database engine completes constraints validation and data modification.
 
 ```sql
@@ -101,7 +104,7 @@ AFTER UPDATE
 AS
 BEGIN
     SET NOCOUNT ON;
-    
+
     -- Only write audit log if status changed
     IF UPDATE(status) -- Evaluates true if status column was modified
     BEGIN
@@ -115,7 +118,8 @@ GO
 ```
 
 ### INSTEAD OF Trigger
-Fires *instead* of the triggering action. Widely used to redirect insertions on complex non-updatable Views to their underlying target tables.
+
+Fires _instead_ of the triggering action. Widely used to redirect insertions on complex non-updatable Views to their underlying target tables.
 
 ```sql
 CREATE OR ALTER TRIGGER sales.trg_InsteadOfCustomerDelete
@@ -155,7 +159,7 @@ WHILE @Counter <= 5
 BEGIN
     PRINT @Counter;
     SET @Counter = @Counter + 1;
-    
+
     IF @Counter = 3
         CONTINUE; -- skip rest of loop
     IF @Counter > 4
@@ -168,6 +172,7 @@ END;
 ## 5. Views & Schema Binding
 
 ### Schema Binding (`WITH SCHEMABINDING`)
+
 Prevents users from modifying the column types or dropping tables referenced by the View. It is required if you want to create an index on the View (Indexed/Materialized View).
 
 ```sql
@@ -195,9 +200,10 @@ BEGIN CATCH
     -- Print details
     PRINT 'Error Number: ' + CAST(ERROR_NUMBER() AS VARCHAR(10));
     PRINT 'Error Message: ' + ERROR_MESSAGE();
-    
+
     -- Throw error back to client
     THROW 50000, 'Customer insertion failed.', 1;
 END CATCH;
 ```
+
 - **`THROW`**: Standard exception raising. The format is: `THROW [error_number], [message], [state]`. The custom error number must be between 50000 and 2147483647.
