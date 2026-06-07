@@ -11,6 +11,13 @@ This repository serves as my personal knowledge base and quick reference for con
 - Python
 - PHP
 
+## Databases
+
+- MySQL
+- PostgreSQL
+- Microsoft SQL Server
+- MongoDB
+
 ## Note
 
 This repository is continuously updated as I learn new technologies, patterns, and best practices.
