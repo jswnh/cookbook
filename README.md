@@ -10,6 +10,8 @@ This repository serves as my personal knowledge base and quick reference for con
 - TypeScript
 - Python
 - PHP
+- Java
+- VB.NET
 
 ## Databases
 
