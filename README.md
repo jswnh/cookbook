@@ -7,16 +7,18 @@ This repository serves as my personal knowledge base and quick reference for con
 ## Languages
 
 - C#
+- JavaScript
 - TypeScript
 - Python
 - PHP
 - Java
 - VB.NET
 
-## Web Technologies (Markup & Styling)
+## Web Technologies (Markup, Styling & APIs)
 
 - HTML
 - CSS
+- DOM
 
 ## Databases
 
